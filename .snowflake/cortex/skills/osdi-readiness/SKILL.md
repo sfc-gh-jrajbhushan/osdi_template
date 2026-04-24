@@ -122,7 +122,7 @@ After generating the readiness report, you MUST write it to a file in the same w
    - Example: For `icd521_card_rewards.sql` → `icd521_card_rewards_OSDI_readiness_report_20260423_143022.md`
    - Example: For `sample.ipynb` → `sample_OSDI_readiness_report_20260423_143022.md`
 
-2. **File location:** Same directory as the source file being validated.
+2. **File location:** The `reports/` folder relative to the workspace root (e.g., `/scratch/reports/`). If the `reports/` folder does not exist, create it first.
 
 3. **Action:** Use the `write` tool to create this file with the full report content (in markdown format). This file serves as an audit trail of compliance checks and MUST be committed alongside the code.
 
