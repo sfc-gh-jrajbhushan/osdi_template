@@ -135,6 +135,20 @@ Perform a deeper scan simulating tools like TruffleHog:
 - **Notebooks:** Also scan for secrets in `!pip install` commands, `os.environ` assignments with literal values, and any cell outputs containing tokens or keys
 - **PASS** if none found. **FAIL** if any pattern detected — list each occurrence with line/cell number and pattern type.
 
+## Auto-Remediation: Compliant Worksheet
+
+After generating the readiness report, check if a compliant version of the worksheet exists in the `pipelines/` folder at the workspace root. The compliant filename follows the naming convention from Rule 6: `<username>_<ticket>_<pipeline>.sql`.
+
+1. Determine the expected compliant filename: `pipelines/<username>_<ticket>_<pipeline>.sql`
+2. Check if the file already exists in `pipelines/`
+3. If it does NOT exist, create it by:
+   - Copying the source file content
+   - Adding any missing OSDI-required elements (copyright header, Team field, manifest reference) to fix all FAIL rules
+   - Writing the compliant file to `pipelines/<username>_<ticket>_<pipeline>.sql`
+4. If it already exists, skip creation and note in the report that the compliant worksheet is up to date
+
+The `pipelines/` folder is top-level (e.g., `/pipelines/`), NOT inside `scratch/`. Create the folder if it does not exist.
+
 ## Report Persistence
 
 After generating the readiness report, you MUST write it to a file in the same workspace/repo:

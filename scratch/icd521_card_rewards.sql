@@ -1,14 +1,5 @@
--- ============================================================
--- OSDI Pipeline: Rewards Points Calculation
--- Pipeline ID: REWARDS_CALC_001
--- Owner: LOB Rewards Team
--- Description: Categorize card transactions and calculate
---              reward points per customer based on spending
--- ============================================================
-
 ALTER SESSION SET QUERY_TAG = 'OSDI_REWARDS_CALC_001';
 
--- Query 1: Categorize customer transactions by spending category
 CREATE OR REPLACE TABLE LOB_DB_COLLAB.LOB_REWARDS.STG_CATEGORIZED_TRANSACTIONS AS
 SELECT
     t.TRANSACTION_ID,
@@ -28,7 +19,6 @@ SELECT
 FROM LOB_DB_COLLAB.LOB_REWARDS.CARD_TRANSACTIONS t
 WHERE t.TRANSACTION_STATUS = 'APPROVED';
 
--- Query 2: Join with rewards multiplier and calculate points per transaction
 CREATE OR REPLACE TABLE LOB_DB_COLLAB.LOB_REWARDS.STG_TRANSACTION_REWARDS AS
 SELECT
     ct.TRANSACTION_ID,

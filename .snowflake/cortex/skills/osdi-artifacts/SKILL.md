@@ -170,7 +170,13 @@ Generate or update the metadata header for an existing file:
 
 ### Artifact 6: README Documentation
 
-Generate a README entry for a pipeline:
+Append a pipeline entry to the **existing** `README.md` file in the workspace root. Do NOT create a new README file — always read the existing one first and append the new entry at the end.
+
+1. Read the existing `README.md` at the workspace root
+2. Check if an entry for this pipeline already exists (match by filename or Pipeline ID)
+3. If it exists, update it in place. If not, append the new entry at the end of the file.
+
+**Entry format to append:**
 ```markdown
 ## <filename>
 
