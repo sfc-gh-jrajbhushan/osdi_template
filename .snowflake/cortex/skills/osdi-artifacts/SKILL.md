@@ -44,15 +44,7 @@ ALTER SESSION SET QUERY_TAG = 'OSDI_<PIPELINE_ID>';
 -- Query 2: <description>
 -- <SQL goes here>
 
--- ============================================================
--- EXCHANGE REGISTRATION
--- ============================================================
--- Table: LOB_DB_COLLAB.LOB_REWARDS.<TABLE_NAME>
--- Description: <what this table contains>
--- Columns:
---   <COLUMN_1>: <description>
---   <COLUMN_2>: <description>
--- ============================================================
+-- See manifests/<ticket>_<pipeline_name>_pipeline.yaml for exchange registration
 ```
 
 **File naming:** `<username>_<ticket>_<pipeline_name>.sql`
@@ -81,14 +73,10 @@ Generate a new `.ipynb` with OSDI-compliant cells:
 ALTER SESSION SET QUERY_TAG = 'OSDI_<PIPELINE_ID>';
 ```
 
-**Cell N (Markdown) — Exchange Registration:**
+**Cell N (Markdown) — Exchange Registration Reference:**
 ```markdown
 ## Exchange Registration
----
-**Table:** LOB_DB_COLLAB.LOB_REWARDS.<TABLE_NAME>
-**Description:** <description>
-**Columns:**
-- <COLUMN>: <description>
+See `manifests/<ticket>_<pipeline_name>_pipeline.yaml` for full exchange registration.
 ```
 
 **File naming:** `<username>_<ticket>_<pipeline_name>.ipynb`
@@ -103,12 +91,73 @@ VALUES
     ('<category_name>', <multiplier>, CURRENT_DATE(), '<description>');
 ```
 
-### Artifact 4: Exchange Registration Block
+### Artifact 4: Exchange Registration YAML Manifest
 
-Generate a standalone exchange registration block for existing tables:
-1. Run `DESCRIBE TABLE` on the target table
-2. Generate the formatted registration block with all columns
-3. Insert it at the end of the active file
+Generate a YAML manifest file documenting all persisted tables in the pipeline.
+
+1. Identify all `CREATE TABLE` / `CREATE OR REPLACE TABLE` statements in the worksheet (or `df.write.save_as_table()` calls in notebooks)
+2. Run `DESCRIBE TABLE` on each target table to get column names and types
+3. Generate the YAML manifest and write it to the `manifests/` folder
+
+**File location:** The top-level `manifests/` folder at the workspace root (e.g., `/manifests/`), NOT inside `scratch/` or any other subdirectory. Create the folder if it does not exist.
+
+**File naming:** `manifests/<ticket>_<pipeline_name>_pipeline.yaml` (worksheet name + `_pipeline.yaml` suffix)
+
+**Pipeline ID:** Generate a UUID (e.g., `a3f1c8e7-4b2d-49a6-b8e0-7d3f5a1c9e42`) instead of a human-readable ID.
+
+**YAML format:**
+```yaml
+pipeline:
+  name: <Pipeline Name>
+  id: <generated-uuid>
+  owner: <username>
+  team: <team_name>
+  description: <brief description>
+  source_file: <username>_<ticket>_<pipeline_name>.sql
+
+schedule:
+  frequency: daily
+  time: "06:00"
+  timezone: America/New_York
+
+tables:
+  - name: LOB_DB_COLLAB.LOB_REWARDS.<TABLE_NAME>
+    description: <what this table contains>
+    columns:
+      - name: <COLUMN_1>
+        type: <data_type>
+        description: <description>
+      - name: <COLUMN_2>
+        type: <data_type>
+        description: <description>
+
+  - name: LOB_DB_COLLAB.LOB_REWARDS.<TABLE_NAME_2>
+    description: <what this table contains>
+    columns:
+      - name: <COLUMN_1>
+        type: <data_type>
+        description: <description>
+
+data_quality_checks:
+  - id: check_1
+    name: <check name>
+    description: <check description>
+    table: <fully qualified table name>
+    query: <SQL query or DMF reference>
+    severity: <warning|error>
+  - id: check_2
+    name: <check name>
+    description: <check description>
+    table: <fully qualified table name>
+    query: <SQL query or DMF reference>
+    severity: <warning|error>
+```
+
+**Generation steps:**
+1. Parse the active file for all persisted table names
+2. Run `DESCRIBE TABLE` on each table to get column names and types
+3. Generate a UUID for the pipeline ID
+4. Write the YAML file to the `manifests/` folder (create the folder if it does not exist)
 
 ### Artifact 5: Pipeline Metadata Header
 
@@ -144,7 +193,7 @@ Generate a README entry for a pipeline:
 
 ### Step 1: Determine Intent
 Ask the user (if not clear):
-- What type of artifact? (worksheet, notebook, registration, header, README)
+- What type of artifact? (worksheet, notebook, YAML manifest, header, README)
 - Pipeline name and ticket ID?
 - What tables will be created?
 
@@ -156,6 +205,7 @@ Ask the user (if not clear):
 ### Step 3: Generate
 - Create the artifact with all OSDI-required elements pre-filled
 - Use the correct file naming convention
+- Write exchange registration YAML manifests to the `manifests/` folder
 - Ensure the artifact would pass `osdi-readiness` out of the box
 
 ### Step 4: Validate

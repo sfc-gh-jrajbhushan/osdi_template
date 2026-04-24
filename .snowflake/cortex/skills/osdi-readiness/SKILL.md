@@ -82,27 +82,49 @@ Check that the file begins with (or contains near the top) a license or copyrigh
 - **Notebooks:** The first cell (or second cell if first is metadata) should contain a copyright notice, either as a markdown cell or a comment in a code cell (e.g., `# Copyright (c) 2026 <Company>. All rights reserved.`)
 - **PASS** if a header is found. **FAIL** if missing — recommend adding a standard copyright header.
 
-### Rule 9: Exchange Registration — Persisted Table Documentation
-Check that every `CREATE TABLE` or `CREATE OR REPLACE TABLE` statement (in SQL or in notebook code cells) has a corresponding exchange registration block at the end of the file. For notebooks, also check for `df.write.save_as_table()` or `session.sql("CREATE...")` calls that persist tables. The registration block must document each persisted table with:
-- **Table name** (fully qualified)
-- **Description** of the table's purpose
-- **Columns** — list each column with its name and a brief description
+### Rule 9: Exchange Registration — YAML Manifest
+Check that every `CREATE TABLE` or `CREATE OR REPLACE TABLE` statement (in SQL or in notebook code cells) has a corresponding entry in a YAML manifest file located in the top-level `manifests/` folder. For notebooks, also check for `df.write.save_as_table()` or `session.sql("CREATE...")` calls that persist tables.
 
-Expected format at the end of the file:
-```sql
--- ============================================================
--- EXCHANGE REGISTRATION
--- ============================================================
--- Table: DATABASE.SCHEMA.TABLE_NAME
--- Description: <what this table contains>
--- Columns:
---   COLUMN_1: <description>
---   COLUMN_2: <description>
---   ...
--- ============================================================
+**Validation steps:**
+1. Extract all persisted table names from the file (fully qualified)
+2. Determine the expected manifest path: `manifests/<filename_without_extension>.yml` (using the source file's name)
+3. Check that the file contains a reference to the manifest (e.g., `-- See manifests/...yml for exchange registration`)
+4. Read the YAML manifest file and verify:
+   - The `pipeline` section contains `name`, `id`, `owner`, `team`, `description`, and `source_file`
+   - The `tables` section lists every persisted table found in the source file
+   - Each table entry has a `name` (fully qualified), `description`, and `columns` list
+   - Each column entry has `name`, `type`, and `description`
+5. Cross-check: every persisted table in the source file must have a matching entry in the manifest, and column counts should match the actual table schema (run `DESCRIBE TABLE` to verify)
+
+**Expected manifest format (`manifests/<name>.yml`):**
+```yaml
+pipeline:
+  name: <Pipeline Name>
+  id: <PIPELINE_ID>
+  owner: <username>
+  team: <team_name>
+  description: <brief description>
+  source_file: <source_filename>
+
+tables:
+  - name: DATABASE.SCHEMA.TABLE_NAME
+    description: <what this table contains>
+    columns:
+      - name: COLUMN_1
+        type: <data_type>
+        description: <description>
+      - name: COLUMN_2
+        type: <data_type>
+        description: <description>
 ```
-- **Notebooks:** The registration block should be in the last markdown cell of the notebook using the same structure (with markdown formatting instead of SQL comments)
-- **PASS** if every persisted table has a matching registration block. **FAIL** if any table is missing — list each unregistered table and provide the recommended block to add.
+
+- **PASS** if manifest exists, all persisted tables are registered, and each has complete column documentation.
+- **FAIL** if:
+  - Manifest file is missing — recommend generating it with the `osdi-artifacts` skill
+  - Source file has no reference to the manifest
+  - Any persisted table is missing from the manifest
+  - Any table entry is missing `description` or `columns`
+  - Column count in manifest does not match actual table schema
 
 ### Rule 10: Code Scanning — Secret Detection Patterns
 Perform a deeper scan simulating tools like TruffleHog:
